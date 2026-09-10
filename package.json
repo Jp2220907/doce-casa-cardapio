@@ -1,0 +1,7 @@
+{
+  "name": "doce-casa-cardapio",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/local-server.cjs"
+  }
+}

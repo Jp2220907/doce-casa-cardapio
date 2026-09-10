@@ -1,6 +1,6 @@
 const json = (body, status = 200) => Response.json(body, { status });
 
-export default async function login(request) {
+async function login(request) {
   if (request.method !== 'POST') {
     return json({ ok: false, error: 'Method not allowed' }, 405);
   }
@@ -28,3 +28,5 @@ export default async function login(request) {
 
   return json({ ok: true });
 }
+
+export default { fetch: login };
