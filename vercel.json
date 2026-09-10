@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/login.js": {
-      "runtime": "nodejs22.x"
-    }
-  },
   "rewrites": [
     { "source": "/cardapio", "destination": "/index.html" },
     { "source": "/admin", "destination": "/index.html" }
