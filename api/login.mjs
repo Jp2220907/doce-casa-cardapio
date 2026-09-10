@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 const json = (body, status = 200) => Response.json(body, { status });
 
 async function login(request) {
@@ -26,7 +28,15 @@ async function login(request) {
     return json({ ok: false, error: 'Invalid credentials' }, 401);
   }
 
-  return json({ ok: true });
+  const token = createHash('sha256').update(`${expectedEmail}:${expectedPassword}:doce-casa-admin`).digest('hex');
+  const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Set-Cookie': `dc_admin=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${secure}`
+    }
+  });
 }
 
 export default { fetch: login };
