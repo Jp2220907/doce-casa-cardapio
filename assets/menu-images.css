@@ -59,3 +59,173 @@
     gap: 0;
   }
 }
+
+/* Mobile layout: keep the administrative area inside the viewport. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+@media (max-width: 700px) {
+  .app-shell {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 16px 56px;
+  }
+
+  .topbar,
+  .admin-head,
+  .toolbar,
+  .settings-card,
+  .admin-row,
+  .heading,
+  .hero {
+    min-width: 0;
+  }
+
+  .topbar {
+    height: 66px;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand strong {
+    font-size: 17px;
+  }
+
+  .brand small {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+
+  .hero {
+    min-height: 186px;
+    padding: 23px 20px;
+    border-radius: 20px;
+    gap: 12px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+    margin: 8px 0;
+  }
+
+  .hero p {
+    font-size: 13px;
+    margin: 0;
+  }
+
+  .hero-cake {
+    flex: 0 0 auto;
+    width: 86px;
+    height: 86px;
+    border-width: 5px;
+    font-size: 48px;
+  }
+
+  .heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+    margin: 25px 0 16px;
+  }
+
+  .heading-actions {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .language-picker select {
+    max-width: 175px;
+  }
+
+  .admin-head {
+    margin: 28px 0 20px;
+  }
+
+  .admin-head h1 {
+    font-size: 31px;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-head > div,
+  .settings-card > div,
+  .admin-info {
+    min-width: 0;
+  }
+
+  .settings-card {
+    padding: 18px;
+    gap: 14px;
+  }
+
+  .toolbar {
+    gap: 12px;
+  }
+
+  .toolbar strong {
+    min-width: 0;
+  }
+
+  .admin-row {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    align-items: center;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .admin-emoji {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-info {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .admin-info strong,
+  .admin-info small {
+    overflow-wrap: anywhere;
+  }
+
+  .pill {
+    grid-column: 1 / -1;
+    margin: 2px 0 0;
+    justify-self: start;
+  }
+
+  .admin-row .secondary,
+  .admin-row .danger {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-row button:nth-of-type(1) {
+    grid-column: 1;
+  }
+
+  .admin-row button:nth-of-type(2) {
+    grid-column: 2;
+  }
+
+  .admin-row button:nth-of-type(3) {
+    grid-column: 1 / -1;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
+  }
+}
