@@ -63,8 +63,15 @@
 /* Mobile layout: keep the administrative area inside the viewport. */
 html,
 body {
+  width: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+body {
+  /* Keeps swipe navigation vertical without disabling accessible pinch zoom. */
+  touch-action: pan-y pinch-zoom;
 }
 
 @media (max-width: 700px) {
@@ -224,7 +231,12 @@ body {
 
   input,
   select,
-  textarea,
+  textarea {
+    max-width: 100%;
+    /* iOS zooms focused form controls below 16px, which exposes lateral panning. */
+    font-size: 16px;
+  }
+
   button {
     max-width: 100%;
   }
