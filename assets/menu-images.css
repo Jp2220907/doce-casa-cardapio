@@ -74,6 +74,13 @@ body {
   touch-action: pan-y pinch-zoom;
 }
 
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 @media (max-width: 700px) {
   .app-shell {
     width: 100%;
@@ -217,16 +224,21 @@ body {
     width: 100%;
   }
 
-  .admin-row button:nth-of-type(1) {
-    grid-column: 1;
-  }
-
-  .admin-row button:nth-of-type(2) {
-    grid-column: 2;
-  }
-
-  .admin-row button:nth-of-type(3) {
+  .admin-actions {
     grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .admin-actions .secondary,
+  .admin-actions .danger {
+    min-height: 38px;
+    padding: 8px 4px;
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: nowrap;
   }
 
   input,
