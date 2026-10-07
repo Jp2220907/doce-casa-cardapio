@@ -117,12 +117,13 @@ const languageName=()=>languageOptions[viewLanguage]||viewLanguage;
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const money=n=>{try{return new Intl.NumberFormat(viewLanguage,{style:'currency',currency:settings.currency}).format(Number(n)||0)}catch{return new Intl.NumberFormat('pt-BR',{style:'currency',currency:settings.currency}).format(Number(n)||0)}};
 const visual=v=>{const value=String(v||'🍰');return /^(https?:\/\/|data:image\/)/i.test(value)?`<img src="${esc(value)}" alt="" loading="lazy">`:esc(value)};
-const productSourceLanguage=p=>Object.entries(p.translations||{}).find(([language,value])=>languageOptions[language]&&value?.name===p.name)?.[0]||'pt-BR';
-const productText=(p,field)=>p.translations?.[viewLanguage]?.[field]||((field==='name'&&nameTranslations[`${p.id}:${productSourceLanguage(p)}:${viewLanguage}:${p.name}`])||p[field]||'');
+const productSourceLanguage=p=>languageOptions[p.translations?._source?.language]?p.translations._source.language:p.translations?.['pt-BR']?.name===p.name?'pt-BR':Object.entries(p.translations||{}).find(([language,value])=>languageOptions[language]&&value?.name===p.name)?.[0]||'pt-BR';
+const savedProductName=(p,language)=>{const name=p.translations?.[language]?.name;return name&&(language===productSourceLanguage(p)||name!==p.name)?name:''};
+const productText=(p,field)=>field==='name'?(savedProductName(p,viewLanguage)||nameTranslations[`${p.id}:${productSourceLanguage(p)}:${viewLanguage}:${p.name}`]||p.name||''):(p.translations?.[viewLanguage]?.[field]||p[field]||'');
 let translationRun=0;
 async function translateProductNames(language){
   const run=++translationRun;
-  const candidates=products.filter(p=>p.active&&productSourceLanguage(p)!==language&&!p.translations?.[language]?.name);
+  const candidates=products.filter(p=>p.active&&productSourceLanguage(p)!==language&&!savedProductName(p,language));
   await Promise.all(candidates.map(async product=>{
     const source=productSourceLanguage(product),key=`${product.id}:${source}:${language}:${product.name}`;
     if(nameTranslations[key])return;

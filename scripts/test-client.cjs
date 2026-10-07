@@ -86,6 +86,9 @@ function setup() {
     await run("translateProductNames('en-GB')");
     assert.equal(run("productText(products[0],'name')"),'Chocolate Cake');
     assert.equal(run("JSON.parse(localStorage.getItem(NAME_TRANSLATIONS))['9:pt-BR:en-GB:Bolo de chocolate']"),'Chocolate Cake');
+    run("products[0].translations={'en-GB':{name:'Bolo de chocolate'},'pt-BR':{name:'Bolo de chocolate'}};");
+    assert.equal(run("productSourceLanguage(products[0])"),'pt-BR');
+    assert.equal(run("productText(products[0],'name')"),'Chocolate Cake');
   }
   console.log('PASS: price/availability/currency review, offline preservation, double-click guard, retry and six WhatsApp languages.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

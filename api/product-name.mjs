@@ -19,7 +19,8 @@ export default {
       const source = nameSource(product);
       // Version the cache by the actual source, so renaming a product invalidates it.
       if (url.searchParams.get('name') !== source.name || url.searchParams.get('source') !== source.language) return reply({error:'Product changed'}, 409);
-      const name = product.translations?.[language]?.name || await translateName(source.name, source.language, language);
+      const saved = product.translations?.[language]?.name;
+      const name = saved && (language === source.language || saved !== source.name) ? saved : await translateName(source.name, source.language, language);
       return reply({id, language, source:source.name, name});
     } catch { return reply({error:'Translation temporarily unavailable'}, 503); }
   }
