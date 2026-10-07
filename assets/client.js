@@ -6,7 +6,7 @@ const seed=[
   {id:5,name:'Brigadeiro gourmet',description:'Caixinha com 6 unidades, sabores sortidos.',price:24,category:'Doces',image:'🍬',active:true}
 ];
 
-const KEY='doceCasaProducts', CART='doceCasaCart', AUTH='doceCasaAdmin', SETTINGS='doceCasaSettings', VISITOR_LANGUAGE='doceCasaVisitorLanguage';
+const KEY='doceCasaProducts', CART='doceCasaCart', AUTH='doceCasaAdmin', SETTINGS='doceCasaSettings', VISITOR_LANGUAGE='doceCasaVisitorLanguage', NAME_TRANSLATIONS='doceCasaNameTranslations';
 const whatsapp='5573988578330';
 const currencyOptions={BRL:'Real brasileiro (R$)',EUR:'Euro (€)',USD:'Dólar americano (US$)',GBP:'Libra esterlina (£)',JPY:'Iene japonês (¥)'};
 const languageOptions={'pt-BR':'Português (Brasil)','en-GB':'English (United Kingdom)','es-ES':'Español','fr-FR':'Français','de-DE':'Deutsch','it-IT':'Italiano'};
@@ -111,13 +111,33 @@ function openWhatsApp(message, clearCart) {
 
 const $=s=>document.querySelector(s);
 const readJSON=(key,fallback)=>{try{const value=JSON.parse(localStorage.getItem(key));return value??fallback}catch{return fallback}};
-let products=readJSON(KEY,seed),cart=readJSON(CART,[]),settings={currency:'BRL',language:'pt-BR',...readJSON(SETTINGS,{})},visitorLanguage=localStorage.getItem(VISITOR_LANGUAGE)||null,viewLanguage=settings.language,category='Todos',cloudReady=false,cloudCatalogEmpty=false,stagedImageURLs=[];
+let products=readJSON(KEY,seed),cart=readJSON(CART,[]),settings={currency:'BRL',language:'pt-BR',...readJSON(SETTINGS,{})},nameTranslations=readJSON(NAME_TRANSLATIONS,{}),visitorLanguage=localStorage.getItem(VISITOR_LANGUAGE)||null,viewLanguage=settings.language,category='Todos',cloudReady=false,cloudCatalogEmpty=false,stagedImageURLs=[];
 const t=key=>(translations[viewLanguage]||translations['pt-BR'])[key]||translations['pt-BR'][key]||key;
 const languageName=()=>languageOptions[viewLanguage]||viewLanguage;
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const money=n=>{try{return new Intl.NumberFormat(viewLanguage,{style:'currency',currency:settings.currency}).format(Number(n)||0)}catch{return new Intl.NumberFormat('pt-BR',{style:'currency',currency:settings.currency}).format(Number(n)||0)}};
 const visual=v=>{const value=String(v||'🍰');return /^(https?:\/\/|data:image\/)/i.test(value)?`<img src="${esc(value)}" alt="" loading="lazy">`:esc(value)};
-const productText=(p,field)=>p.translations?.[viewLanguage]?.[field]||p[field]||'';
+const productSourceLanguage=p=>Object.entries(p.translations||{}).find(([language,value])=>languageOptions[language]&&value?.name===p.name)?.[0]||'pt-BR';
+const productText=(p,field)=>p.translations?.[viewLanguage]?.[field]||((field==='name'&&nameTranslations[`${p.id}:${productSourceLanguage(p)}:${viewLanguage}:${p.name}`])||p[field]||'');
+let translationRun=0;
+async function translateProductNames(language){
+  const run=++translationRun;
+  const candidates=products.filter(p=>p.active&&productSourceLanguage(p)!==language&&!p.translations?.[language]?.name);
+  await Promise.all(candidates.map(async product=>{
+    const source=productSourceLanguage(product),key=`${product.id}:${source}:${language}:${product.name}`;
+    if(nameTranslations[key])return;
+    try{
+      const query=new URLSearchParams({id:String(product.id),lang:language,name:product.name,source});
+      const response=await fetch(`/api/product-name?${query}`,{cache:'force-cache'});
+      if(!response.ok)return;
+      const result=await response.json();
+      if(typeof result.name!=='string'||!result.name.trim())return;
+      if(run!==translationRun)return;
+      nameTranslations[key]=result.name.trim();
+      localStorage.setItem(NAME_TRANSLATIONS,JSON.stringify(nameTranslations));
+    }catch{}
+  }));
+}
 function save(){localStorage.setItem(KEY,JSON.stringify(products));localStorage.setItem(CART,JSON.stringify(cart))}
 function saveSettings(){localStorage.setItem(SETTINGS,JSON.stringify(settings))}
 async function loadCloud(){try{const response=await fetch(`/api/catalog${route()==='admin'?'?admin=1':''}`,{cache:'no-store',credentials:'same-origin'});if(!response.ok)return false;const remote=await response.json();if(!Array.isArray(remote.products))return false;const previous=JSON.stringify({products,settings});cloudReady=true;cloudCatalogEmpty=remote.products.length===0;products=remote.products;settings={currency:'BRL',language:'pt-BR',...remote.settings};save();saveSettings();return previous!==JSON.stringify({products,settings})}catch{return false}}
@@ -131,7 +151,7 @@ function menu(){
   $('#app').innerHTML=`<div class="heading"><div><small>${t('made')}</small><h2>${t('choose')}</h2></div><div class="heading-actions"><label class="language-picker" title="Escolher idioma">🌐 <select id="visitorLanguage" aria-label="Escolher idioma"><option value="default" ${visitorLanguage?'':'selected'}>Padrão da loja</option>${Object.entries(languageOptions).map(([key,label])=>`<option value="${key}" ${viewLanguage===key&&visitorLanguage?'selected':''}>${label}</option>`).join('')}</select></label><button class="cart-btn" id="cartBtn">🛒 ${t('cart')} <b>${cartQty()}</b></button></div></div><nav class="categories">${cats.map(c=>`<button class="cat ${c===category?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</nav><button class="custom-cake" id="customCakeBtn">🎂 ${t('custom')}<span>${t('customSub')}</span></button><section class="grid">${active.filter(p=>category==='Todos'||p.category===category).map(card).join('')||`<div class="empty">${t('empty')}</div>`}</section>`;
   document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{category=b.dataset.cat;menu()});
   document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(+b.dataset.add));
-  $('#visitorLanguage').onchange=e=>{visitorLanguage=e.target.value==='default'?null:e.target.value;if(visitorLanguage)localStorage.setItem(VISITOR_LANGUAGE,visitorLanguage);else localStorage.removeItem(VISITOR_LANGUAGE);category='Todos';menu()};
+  $('#visitorLanguage').onchange=e=>{visitorLanguage=e.target.value==='default'?null:e.target.value;if(visitorLanguage)localStorage.setItem(VISITOR_LANGUAGE,visitorLanguage);else localStorage.removeItem(VISITOR_LANGUAGE);viewLanguage=visitorLanguage||settings.language;category='Todos';menu();const language=viewLanguage;translateProductNames(language).then(()=>{if(viewLanguage===language)menu()})};
   $('#cartBtn').onclick=cartModal;$('#customCakeBtn').onclick=customCakeModal;
 }
 function card(p){return `<article class="product"><div class="pic">${visual(p.image)}</div><h3>${esc(productText(p,'name'))}</h3><p>${esc(productText(p,'description'))}</p><div class="product-foot"><strong>${money(p.price)}</strong><button class="add" data-add="${p.id}">＋ ${t('add')}</button></div></article>`}
@@ -190,5 +210,6 @@ function productModal(id){const p=id?products.find(x=>x.id===id):{name:'',descri
 function dataURLToBlob(dataURL){const [meta,data]=dataURL.split(',');const binary=atob(data);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return new Blob([bytes],{type:meta.match(/data:(.*?);/)?.[1]||'image/jpeg'})}
 function compressImage(file){return new Promise((resolve,reject)=>{if(!file.type.startsWith('image/'))return reject(new Error('invalid'));const reader=new FileReader();reader.onload=()=>{const image=new Image();image.onload=()=>{const max=1000,scale=Math.min(1,max/Math.max(image.width,image.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL('image/jpeg',.82))};image.onerror=reject;image.src=reader.result};reader.onerror=reject;reader.readAsDataURL(file)})}
 
-async function boot(){await loadCloud();if(route()==='admin'&&!cloudReady){sessionStorage.removeItem(AUTH);login()}else if(route()==='menu'){menu();if(!cloudReady)notify('Cardápio offline: mostrando a última versão salva neste aparelho.')}else admin();setInterval(async()=>{if(route()!=='menu'||actionBusy||document.querySelector('.modal'))return;if(await loadCloud())menu()},10000)}
+async function boot(){await loadCloud();if(route()==='admin'&&!cloudReady){sessionStorage.removeItem(AUTH);login()}else if(route()==='menu'){viewLanguage=visitorLanguage||settings.language;menu();const language=viewLanguage;translateProductNames(language).then(()=>{if(viewLanguage===language)menu()});if(!cloudReady)notify('Cardápio offline: mostrando a última versão salva neste aparelho.')}else admin();setInterval(async()=>{if(route()!=='menu'||actionBusy||document.querySelector('.modal'))return;if(await loadCloud()){viewLanguage=visitorLanguage||settings.language;menu();const language=viewLanguage;translateProductNames(language).then(()=>{if(viewLanguage===language)menu()})}},10000)}
 window.addEventListener('popstate',route);boot();
+
